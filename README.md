@@ -1,5 +1,5 @@
 # gow
-Watching directory & Running command written Go.  
+Watch directory & Run command written Go.  
 Easy, Portability and Fastest.
 
 ## Naming:
@@ -20,10 +20,10 @@ Usage of ./gow:
 ```
 
 ## Requirements:
-- Go
-- [WIP] OS X only
+- OS X only
   - Now, `gow` use [`Apple OS X FSEvents`](https://developer.apple.com/library/mac/documentation/Darwin/Reference/FSEvents_Ref/) and [`go-fsnotify/fsevents`](https://github.com/go-fsnotify/fsevents)
-  - Support `linux` and `Windows` use [go-fsnotify/fsnotify](https://github.com/go-fsnotify/fsnotify) if I feel like it :)
+  - Support `Linux` and `Windows` use [go-fsnotify/fsnotify](https://github.com/go-fsnotify/fsnotify) if I feel like it :)
+- Go (Developer only)
 
 ## Goals:
 - Support multi platform use Go binary build.
