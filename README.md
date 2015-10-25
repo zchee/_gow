@@ -32,14 +32,15 @@ Usage of ./gow:
 
 ## Support parse files:
 
-| File        | State | Language     |
-|-------------|-------|--------------|
-| flag        | Yes   | Shell        |
-| `gulp.js`   | No    | JavaScript   |
-| `grunt.js`  | No    | JavaScript   |
-| `Guardfile` | No    | Guard DSL    |
-| `Makefile`  | No    | Makefile DSL |
-| etc...      | No    | Any          |
+| File        | State | Language      |
+|-------------|-------|---------------|
+| flag        | Yes   | Shell         |
+| `gow.json`? | No    | JSON(gow DSL) |
+| `gulp.js`   | No    | JavaScript    |
+| `grunt.js`  | No    | JavaScript    |
+| `Guardfile` | No    | Guard DSL     |
+| `Makefile`  | No    | Makefile DSL  |
+| etc...      | No    | Any           |
 
 ## License:
 The MIT License (MIT)
