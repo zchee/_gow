@@ -40,21 +40,21 @@ e.g. `create`, `edit:`, `delete:` and etc.
         {
             "create": [
                 {
-                  "command": "echo create",
+                    "command": "echo create"
                 }
             ]
         },
         {
             "edit": [
                 {
-                  "command": "echo edit",
+                    "command": "echo edit"
                 }
             ]
         },
         {
             "delete": [
                 {
-                  "command": "echo Delete!!",
+                    "command": "echo Delete!!"
                 }
             ]
         }
