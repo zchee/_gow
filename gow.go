@@ -5,19 +5,23 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/go-fsnotify/fsevents"
-	"github.com/mattn/go-colorable"
 	log "github.com/sirupsen/logrus"
 	"github.com/tcnksm/go-gitconfig"
 )
+
+// Disable vcs folder by default
+var filePath = []string{
+	".git",
+	".hg",
+	".svn",
+}
 
 var noteDescription = map[fsevents.EventFlags]string{
 	fsevents.MustScanSubDirs: "MustScanSubdirs",
@@ -42,22 +46,28 @@ var noteDescription = map[fsevents.EventFlags]string{
 	fsevents.ItemIsSymlink:     "IsSymLink",
 }
 
+var (
+	path    = flag.String("path", CurrentDir(), "Watch directory path")
+	command = flag.String("command", "", "Run command name after any event. Require -event flag")
+	event   = flag.String("event", "", "Watch directory path")
+)
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+}
+
 func main() {
-	log.SetOutput(colorable.NewColorableStdout())
-	p, _ := os.Getwd()
-	path := flag.String("path", p, "Watch directory path")
+	// TODO: Support Windows ansi color
+	// It enable when support cross platform
+	// "github.com/mattn/go-colorable"
+	// log.SetOutput(colorable.NewColorableStdout())
 
 	flag.Parse()
-
-	// dev, _ := fsevents.DeviceForPath(*path)
-	// log.Print(dev)
-	// log.Println(fsevents.EventIDForDeviceBeforeTime(dev, time.Now()))
 
 	es := &fsevents.EventStream{
 		Paths:   []string{*path},
 		Latency: 0 * time.Millisecond,
-		// Device:  dev,
-		Flags: fsevents.FileEvents | fsevents.WatchRoot}
+		Flags:   fsevents.FileEvents | fsevents.WatchRoot}
 	es.Start()
 	ec := es.Events
 
@@ -87,48 +97,31 @@ func main() {
 
 // Support space separate cmd args for exec.Command()
 // Can be specified in space separate
-func execCommand(command string) {
-	split := strings.Split(command, " ")
-	argc := split[0]
+func execCommand(cmd string) {
+	// Skip when not set command flag
+	if *command == "" {
+		return
+	}
 
+	// Split & convert args "c" to string slice
+	split := strings.Split(cmd, " ")
+	argc := split[0]
 	var argv = strings.Fields(split[1])
 	for i := 2; i < len(split); i++ {
 		argv = append(argv, split[i])
-		fmt.Println(argv)
 	}
 
-	cmd := exec.Command(argc, argv...)
+	c := exec.Command(argc, argv...)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
 
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("cmd.Start: %v")
-	}
+	c.Run()
 
-	if err := cmd.Wait(); err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			// The program has exited with an exit code != 0
-			// This works on both Unix and Windows. Although package
-			// syscall is generally platform dependent, WaitStatus is
-			// defined for both Unix and Windows and in both cases has
-			// an ExitStatus() method with the same signature.
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				log.Printf("Exit Status: %d", status.ExitStatus())
-			}
-		} else {
-			log.Fatalf("cmd.Wait: %v", err)
-		}
-	}
-	// cmd.Run()
 	return
 }
 
 func logEvent(event fsevents.Event) {
-	// p, _ := os.Getwd()
-	// path := flag.String("path", p, "Watch directory path")
-	var filePath = []string{}
-
 	gitignoreGloabalPath, err := gitconfig.Global("core.excludesfile")
 	if err != nil {
 		log.Fatal(err)
@@ -145,22 +138,25 @@ func logEvent(event fsevents.Event) {
 		filePath = append(filePath, scanner.Text())
 	}
 
-	note := ""
-	for bit, description := range noteDescription {
-		if event.Flags&bit == bit {
-			note += description + " "
-		}
-	}
-
 	f := strings.Split(event.Path, "/")
 	if !StringInSlice(f[len(f)-1], filePath) {
+		note := ""
+		for bit, description := range noteDescription {
+			if event.Flags&bit == bit {
+				note += description + " "
+			}
+		}
+
 		log.Infoln("EventID:", event.ID)
 		log.Infoln("Path:", event.Path)
 		log.Infoln("Flags:", note)
 
 		for eventType, _ := range noteDescription {
-			if event.Flags&eventType == fsevents.ItemModified {
-				execCommand("echo hello")
+			switch event.Flags & eventType {
+
+			case fsevents.ItemModified:
+				go execCommand(*command)
+
 			}
 		}
 	}
