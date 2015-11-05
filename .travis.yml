@@ -1,1 +1,17 @@
-language: go
+os: osx
+
+env:
+  global:
+    - GOPATH=/Users/travis/go
+    - PATH=${GOPATH}/bin:$PATH
+    - GO15VENDOREXPERIMENT=1
+    - GOARCH=amd64
+    - GOMAXPROCS=8
+    - GOOS=darwin
+    - HOMEBREW_MAKE_JOBS=9
+before_install:
+  - brew update
+  - brew outdated  go || brew upgrade go
+  - go get -d -v github.com/zchee/gow
+script:
+  - make
