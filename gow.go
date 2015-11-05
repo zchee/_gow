@@ -13,15 +13,10 @@ import (
 
 	"github.com/go-fsnotify/fsevents"
 	log "github.com/sirupsen/logrus"
-	"github.com/tcnksm/go-gitconfig"
 )
 
 // Disable vcs folder by default
-var filePath = []string{
-	".git",
-	".hg",
-	".svn",
-}
+var filePath = []string{}
 
 var noteDescription = map[fsevents.EventFlags]string{
 	fsevents.MustScanSubDirs: "MustScanSubdirs",
@@ -33,11 +28,15 @@ var noteDescription = map[fsevents.EventFlags]string{
 	fsevents.Mount:           "Mount",
 	fsevents.Unmount:         "Unmount",
 
-	fsevents.ItemCreated:       "Created",
-	fsevents.ItemRemoved:       "Removed",
+	// fsevents.ItemCreated:       "Created",
+	// fsevents.ItemRemoved:       "Removed",
+	// fsevents.ItemRenamed:       "Renamed",
+	// fsevents.ItemModified:      "Modified",
+	fsevents.ItemCreated:       "c",
+	fsevents.ItemRemoved:       "r",
 	fsevents.ItemInodeMetaMod:  "InodeMetaMod",
-	fsevents.ItemRenamed:       "Renamed",
-	fsevents.ItemModified:      "Modified",
+	fsevents.ItemRenamed:       "rn",
+	fsevents.ItemModified:      "m",
 	fsevents.ItemFinderInfoMod: "FinderInfoMod",
 	fsevents.ItemChangeOwner:   "ChangeOwner",
 	fsevents.ItemXattrMod:      "XAttrMod",
@@ -48,8 +47,9 @@ var noteDescription = map[fsevents.EventFlags]string{
 
 var (
 	path    = flag.String("path", CurrentDir(), "Watch directory path")
-	command = flag.String("command", "", "Run command name after any event. Require -event flag")
-	event   = flag.String("event", "", "Watch directory path")
+	command = flag.String("command", "", "Run command after flag 'event'. Require -event flag")
+	event   = flag.String("event", "", "Watch event type")
+	file    = flag.String("file", "", "Watch file type")
 )
 
 func init() {
@@ -104,59 +104,50 @@ func execCommand(cmd string) {
 	}
 
 	// Split & convert args "c" to string slice
-	split := strings.Split(cmd, " ")
-	argc := split[0]
-	var argv = strings.Fields(split[1])
-	for i := 2; i < len(split); i++ {
-		argv = append(argv, split[i])
+	args := strings.Split(cmd, ",")
+	for _, i := range args {
+		split := strings.Split(i, " ")
+		argc := split[0]
+		var argv = strings.Fields(split[1])
+		for i := 2; i < len(split); i++ {
+			argv = append(argv, split[i])
+		}
+
+		c := exec.Command(argc, argv...)
+
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+
+		c.Run()
+		log.Infoln("Finished")
+
 	}
-
-	c := exec.Command(argc, argv...)
-
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-
-	c.Run()
 
 	return
 }
 
-func logEvent(event fsevents.Event) {
-	gitignoreGloabalPath, err := gitconfig.Global("core.excludesfile")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	gitignoreGlobal, err := os.Open(gitignoreGloabalPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer gitignoreGlobal.Close()
-
-	scanner := bufio.NewScanner(gitignoreGlobal)
-	for scanner.Scan() {
-		filePath = append(filePath, scanner.Text())
-	}
-
-	f := strings.Split(event.Path, "/")
-	if !StringInSlice(f[len(f)-1], filePath) {
+func logEvent(events fsevents.Event) {
+	// Split "file" flag separate "."
+	// Detection file extension
+	f := strings.Split(events.Path, ".")
+	if StringInSlice(f[len(f)-1], strings.Split(*file, ",")) {
 		note := ""
 		for bit, description := range noteDescription {
-			if event.Flags&bit == bit {
+			if events.Flags&bit == bit {
 				note += description + " "
 			}
 		}
 
-		log.Infoln("EventID:", event.ID)
-		log.Infoln("Path:", event.Path)
+		log.Infoln("EventID:", events.ID)
+		log.Infoln("Path:", events.Path)
 		log.Infoln("Flags:", note)
 
-		for eventType, _ := range noteDescription {
-			switch event.Flags & eventType {
+		for _, events := range noteDescription {
+			// switch event.Flags & eventType {
+			switch true {
 
-			case fsevents.ItemModified:
+			case events == *event:
 				go execCommand(*command)
-
 			}
 		}
 	}
