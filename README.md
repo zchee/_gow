@@ -1,4 +1,6 @@
 # gow
+[![Build Status](https://travis-ci.org/zchee/gow.svg?branch=master)](https://travis-ci.org/zchee/gow)
+
 Watch directory & Run command written Go.  
 Easy, Portability and Fastest.
 
