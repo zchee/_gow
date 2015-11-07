@@ -31,7 +31,9 @@ TOP_PACKAGE_DIR := github.com/$(GITHUB_USER)
 PACKAGE_LIST := `basename $(PWD)`
 # Parse "func main()" word only .go in current dir. Required ag
 # FIXME: Not support main.go
-OUTPUT_NAME := `ag --go -l --depth 1 "func main\(\)" | sed -e 's/\.go//g'`
+# OUTPUT_NAME := `ag --go -l --depth 1 "func main\(\)" | sed -e 's/\.go//g'`
+# Get output name no dependency
+OUTPUT_NAME := `go list | awk -F "/" '{print $NF}'`
 
 # go get -u -v github.com/jstemmer/gotags
 CTAGS_CMD=gotags
