@@ -1,4 +1,11 @@
+sudo: false
+
 os: osx
+
+language: go
+
+go:
+  - 1.5.1
 
 env:
   global:
@@ -10,8 +17,6 @@ env:
     - GOOS=darwin
     - HOMEBREW_MAKE_JOBS=9
 before_install:
-  - brew update
-  - brew outdated  go || brew upgrade go
-  - go get -d -v github.com/zchee/gow
+  - make update-deps
 script:
-  - make
+  - make build-verbose
