@@ -15,8 +15,9 @@ env:
     - GOARCH=amd64
     - GOMAXPROCS=8
     - GOOS=darwin
-    - HOMEBREW_MAKE_JOBS=9
+
 before_install:
   - make update-deps
+
 script:
   - make build-verbose
