@@ -25,7 +25,8 @@ CMAGENTA=\x1b[35;01m
 CCYAN=\x1b[36;01m
 
 # Packages
-TOP_PACKAGE_DIR := github.com/$(USER)
+GITHUB_USER=zchee
+TOP_PACKAGE_DIR := github.com/$(GITHUB_USER)
 # Current 
 PACKAGE_LIST := `basename $(PWD)`
 # Parse "func main()" word only .go in current dir. Required ag
